@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Diagnosis</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label, textarea, input {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        input[type="text"], textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #response {
+            margin-top: 20px;
+        }
+
+        .hospital-list {
+            margin-top: 10px;
+        }
+
+        .hospital-list li {
+            margin-bottom: 5px;
+        }
+
+        .diagnosis {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <form id="diseaseForm">
+        <h1>Disease Diagnosis</h1>
+        <label for="patient_id">Patient ID:</label>
+        <input type="text" id="patient_id" name="patient_id" required>
+
+        <label for="symptoms">Symptoms or Ask for Diet Suggestions:</label>
+        <textarea id="symptoms" name="symptoms" required></textarea>
+
+        <label for="location">Location (latitude,longitude or city):</label>
+        <input type="text" id="location" name="location">
+
+        <button type="submit">Submit</button>
+        <div id="response"></div>
+    </form>
+
+    <script>
+        document.getElementById('diseaseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const patient_id = document.getElementById('patient_id').value;
+            const symptoms = document.getElementById('symptoms').value;
+            const location = document.getElementById('location').value;
+
+            const response = await fetch('/diagnose_disease', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({patient_id, symptoms, location})
+            });
+
+            const result = await response.json();
+
+            // Clear previous response
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';
+
+            // Display diagnosis
+            const diagnosis = document.createElement('p');
+            diagnosis.className = 'diagnosis';
+            diagnosis.innerText = `Diagnosis: ${result.diagnosis}`;
+            responseDiv.appendChild(diagnosis);
+
+            // Display list of hospitals, if available
+            if (result.hospitals && result.hospitals.length > 0) {
+                const hospitalList = document.createElement('ul');
+                hospitalList.className = 'hospital-list';
+
+                result.hospitals.forEach(hospital => {
+                    const hospitalItem = document.createElement('li');
+                    hospitalItem.innerText = `${hospital.name}, Address: ${hospital.address}`;
+                    hospitalList.appendChild(hospitalItem);
+                });
+
+                const hospitalHeading = document.createElement('h3');
+                hospitalHeading.innerText = 'Nearby Hospitals:';
+                responseDiv.appendChild(hospitalHeading);
+                responseDiv.appendChild(hospitalList);
+            } else {
+                const noHospitals = document.createElement('p');
+                noHospitals.innerText = 'No nearby hospitals found.';
+                responseDiv.appendChild(noHospitals);
+            }
+        });
+    </script>
+</body>
+</html>
